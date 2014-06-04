@@ -1,0 +1,112 @@
+Control cgroups, usually referred to as cgroups, are a Linux kernel feature
+which provides for grouping of tasks and resource tracking and limitations for those group.
+While several systems have been introduced to help in configuring and
+managing cgroups, the kernel's cgroup interface is provided through
+a pseudo-filesystem called cgroupfs.  Controls are implemented in
+different subsystems - memory, cpu, etc - which may be mounted
+separately or co-mounted with other subsystems.  The filesystem tree
+shows the cgroup hierarchy - for instance /user/joe/1.session represents
+1.session, which is a child of cgroup joe, which is a child of /user.
+
+In general, cgroup limits are hierarchical, meaning that the limits placed
+on /user/joe cannot be exceeded by /usr/joe/1.session.  There are currently
+exceptions to this, but stricter adherence is a goal as cgroups are being
+largely reworked.
+
+The existing subsystems include
+
+. cpusets
+. blkio
+. cpuacct
+. devices
+. freezer
+. hugetlb
+. memory
+. net_cls
+. net_pri
+. cpu
+. perf_event
+
+In addition, cgroups can be mounted with no bound subsystem, in which case
+they serve only to track processes.  An example of this is the name=systemd
+cgroup which is used by systemd to track services and user sessions.
+
+Mounting
+
+To be available, specific cgroup subsystems must be compiled into the
+kernel.  Since they are exposed through a virtual filesystem, subsystems
+must be mounted before they can be controlled.  The usual place for this
+is under /sys/fs/cgroup.  If all the desired subsystems can be co-mounted,
+then the system may simply
+
+	mount -t cgroup cgroup /sys/fs/cgroup
+
+If multiple, separately mounted subsystems are desired, then this is
+usually done in per-subsystem subdirectories.  This requires first mounting
+a tmpfs under /sys/fs/cgroup so that subdirectories can be created.  For
+instance, to mount cpu, memory and devices cgroups, you could
+
+	mount -t tmpfs -o size=100000,mode=755 cgroups /sys/fs/cgroup
+	for s in cpu memory devices; do
+		mkdir /sys/fs/cgroup/$s
+		mount -t cgroup -o $s $s /sys/fs/cgroup/$s
+	done
+
+Co-mounting subsystems has the effect that a task is in the same cgroup for
+all co-mounted subsystems.  Separately mounting subsystems allows a task to
+be in cgroup /foo1 for one subsystem while being in /foo2/foo3 for another.
+
+Creating cgroups and moving tasks
+
+The system begins with a single root cgroup (per hierarchy), '/', which all tasks belong to.
+A new cgroup is created using mkdir(2):
+
+	mkdir /sys/fs/cgroup/cpu/cg1
+
+This creates a new empty cgroup.  Tasks may be moved to this cgroup by writing
+their pids into the cgroup's "tasks" or "cgroup.procs" file:
+
+	echo $$ > /sys/fs/cgroup/cpu/cg1/tasks
+
+The same file can be read to obtain a list of the processes currently in cg1.
+By using the cgroup.procs file instead of the tasks file, all tasks in the
+threadgroup are moved into the new cgroup at once.
+
+At fork(2), the new child is created as a member of the parent's cgroup, leading
+to implicit grouping of process hierarchies.
+
+Note: in the upcoming unified hierarchy, a new restriction is imposed such
+that tasks may only exist in leaf cgroups.  For instance, if cgroup /cg1/cg2
+exists, then a task may exist in /cg1/cg2, but not in /cg1.  This is to
+avoid the current ambiguity in the delegation of resources between tasks in /cg1
+and its children.
+
+Removing cgroups
+
+To remove a cgroup, it must first have no child cgroups and no tasks.  So long
+as that is the case, the cgroup is removed using rmdir(2).
+
+A special file in each cgroup hierarchy, called 'release_agent', can be used
+to register a program to handle cgroups which become newly empty.  The program
+will be called each time a cgroup marked for autoremove becomes empty and childless.
+It cgroup path will be listed as the first argument.  The cgroup must be marked
+as eligble for autoremove by writing '1' into its notify_on_release file.
+
+A new feature in 3.15 (?) is the 'cgroup.populated' file.  This reads 0 if
+there are no tasks in the cgroup or its descendents, and 1 otherwise.  It
+can be watched for changes using inotify.  This allows userspace to efficiently
+watch cgroups for autoremove conditions.
+
+Subsystems  # give details on each subsystem
+
+. cpusets
+. blkio
+. cpuacct
+. devices
+. freezer
+. hugetlb
+. memory
+. net_cls
+. net_pri
+. cpu
+. perf_event
