@@ -2,11 +2,20 @@ Control cgroups, usually referred to as cgroups, are a Linux kernel feature
 which provides for grouping of tasks and resource tracking and limitations for those group.
 While several systems have been introduced to help in configuring and
 managing cgroups, the kernel's cgroup interface is provided through
-a pseudo-filesystem called cgroupfs.  Controls are implemented in
-different subsystems - memory, cpu, etc - which may be mounted
-separately or co-mounted with other subsystems.  The filesystem tree
-shows the cgroup hierarchy - for instance /user/joe/1.session represents
+a pseudo-filesystem called cgroupfs.  Task grouping is implemented in the
+core cgroup kernel code, while resource tracking and limits are implemented in
+different per-resource-type subsystems - memory, cpu, etc - which may be
+enabled as separate hierarchies, or joined into comounted hierarchies.
+Each hierarchy is constitutes a separate mount of the cgroupfs filesystem,
+with the subsystems enabled in that hierarchy listed as mount options.
+For each mount, the directory hierarchy mirrors the control group hierarchy.
+Each control group is represented by a directory, with each of its child
+control cgroups represented as a child directory.
+For instance /user/joe/1.session represents control group
 1.session, which is a child of cgroup joe, which is a child of /user.
+Under each cgroup directory are a set of files which can be read from
+to get, and written to to change, resource limits and a few general cgroup
+properties.
 
 In general, cgroup limits are hierarchical, meaning that the limits placed
 on /user/joe cannot be exceeded by /usr/joe/1.session.  There are currently
@@ -33,7 +42,7 @@ cgroup which is used by systemd to track services and user sessions.
 
 Mounting
 
-To be available, specific cgroup subsystems must be compiled into the
+To be available, a given cgroup subsystem must be compiled into the
 kernel.  Since they are exposed through a virtual filesystem, subsystems
 must be mounted before they can be controlled.  The usual place for this
 is under /sys/fs/cgroup.  If all the desired subsystems can be co-mounted,
@@ -79,7 +88,12 @@ Note: in the upcoming unified hierarchy, a new restriction is imposed such
 that tasks may only exist in leaf cgroups.  For instance, if cgroup /cg1/cg2
 exists, then a task may exist in /cg1/cg2, but not in /cg1.  This is to
 avoid the current ambiguity in the delegation of resources between tasks in /cg1
-and its children.
+and its children.  The recommended workaround is to create a subdirectory called
+leaf for any non-leaf cgroup which should contain tasks, and make sure not to
+create child cgroups of it.  In the above example, tasks which previously would
+have gone into /cg1 would now go into /cg1/leaf.  This has the advantage of
+making explicit the relationship between tasks in /cg1/leaf and /cg1's other
+children.
 
 Removing cgroups
 
@@ -89,8 +103,9 @@ as that is the case, the cgroup is removed using rmdir(2).
 A special file in each cgroup hierarchy, called 'release_agent', can be used
 to register a program to handle cgroups which become newly empty.  The program
 will be called each time a cgroup marked for autoremove becomes empty and childless.
-It cgroup path will be listed as the first argument.  The cgroup must be marked
-as eligble for autoremove by writing '1' into its notify_on_release file.
+The cgroup path will be listed as the first argument.  The cgroup must be marked
+as eligble for autoremove by writing '1' into its notify_on_release file, and
+this value is inherited by newly created child cgroups.
 
 A new feature in 3.15 (?) is the 'cgroup.populated' file.  This reads 0 if
 there are no tasks in the cgroup or its descendents, and 1 otherwise.  It
