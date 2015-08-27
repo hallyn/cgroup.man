@@ -175,6 +175,14 @@ numa nodes.
 
 . blkio
 
+The blkio cgroup controls and limits access to specified block devices by 
+applying IO control in the form of throttling and upper limits against leaf
+nodes and intermediate nodes in the storage hierarchy.
+
+Two policees are available. The first is a proportional weight time based division
+of disk implemented with CFQ.  This is in effect for leaf nodes using CFQ.  The 
+second is a throttling policy which specifies upper IO rate limits on a device.
+
 . cpuacct
 
 This provides accounting for cpu usage by groups of tasks.
