@@ -71,7 +71,7 @@ be in cgroup /foo1 for one subsystem while being in /foo2/foo3 for another.
 
 Introspection
 
-The list of subsytems compiled into the kernel can be seen in the file
+The list of subsystems compiled into the kernel can be seen in the file
 /proc/cgroups.  The file /proc/pid/cgroup lists the task's current cgroup
 membership for each mounted hierarchy.
 
@@ -114,11 +114,11 @@ A special file in each cgroup hierarchy, called 'release_agent', can be used
 to register a program to handle cgroups which become newly empty.  The program
 will be called each time a cgroup marked for autoremove becomes empty and childless.
 The cgroup path will be listed as the first argument.  The cgroup must be marked
-as eligble for autoremove by writing '1' into its notify_on_release file, and
+as eligible for autoremove by writing '1' into its notify_on_release file, and
 this value is inherited by newly created child cgroups.
 
 A new feature in 3.15 (?) is the 'cgroup.populated' file.  This reads 0 if
-there are no tasks in the cgroup or its descendents, and 1 otherwise.  It
+there are no tasks in the cgroup or its descendants, and 1 otherwise.  It
 can be watched for changes using inotify.  This allows userspace to efficiently
 watch cgroups for autoremove conditions.
 
@@ -152,7 +152,7 @@ This is the list of controllers which are available to this cgroup.  No
 controllers are active until they are enabled through the "cgroup.subtree_control"
 file, by writing the name of the space-separate list of controllers, each preceded
 by '+' (to enable) or '-' (to disable).  If the freezer controller is not
-enalbed in /A/B, then it cannot be enabled in /A/B/C.
+enabled in /A/B, then it cannot be enabled in /A/B/C.
 
 3. No "tasks" or "cgroup.clone_children" files
 
@@ -179,7 +179,7 @@ The blkio cgroup controls and limits access to specified block devices by
 applying IO control in the form of throttling and upper limits against leaf
 nodes and intermediate nodes in the storage hierarchy.
 
-Two policees are available. The first is a proportional weight time based division
+Two policies are available. The first is a proportional weight time based division
 of disk implemented with CFQ.  This is in effect for leaf nodes using CFQ.  The 
 second is a throttling policy which specifies upper IO rate limits on a device.
 
@@ -196,7 +196,7 @@ violate existing rules for the target or ancestor cgroups.
 
 . freezer
 
-The freezer cgroup can suspend and un-suspect all tasks in a cgroup.
+The freezer cgroup can suspend and un-suspend all tasks in a cgroup.
 Freezing a cgroup /A also causes its children, i.e. tasks in /A/B,
 to be frozen.
 
