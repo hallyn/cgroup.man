@@ -8,10 +8,10 @@ While several systems have been introduced to help in configuring and
 managing cgroups, the kernel's cgroup interface is provided through
 a pseudo-filesystem called cgroupfs.  Task grouping is implemented in the
 core cgroup kernel code, while resource tracking and limits are implemented in
-different per-resource-type subsystems - memory, cpu, etc - which may be
+a set of per-resource-type subsystems - memory, cpu, etc - which may be
 enabled as separate hierarchies, or joined into comounted hierarchies.
 Each hierarchy constitutes a separate mount of the cgroupfs filesystem,
-with the subsystems enabled in that hierarchy listed as mount options.
+with the subsystems enabled in that hierarchy listed in the mount options.
 For each mounted hierarchy, the directory tree mirrors the control group hierarchy.
 Each control group is represented by a directory, with each of its child
 control cgroups represented as a child directory.
